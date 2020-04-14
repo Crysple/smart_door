@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  	<title>access</title>
+  	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+
+	<script
+	src="https://code.jquery.com/jquery-3.4.1.min.js"
+	integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+	crossorigin="anonymous"></script>
+
+    <script
+      type="text/javascript"
+      src="lib/axios/dist/axios.standalone.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="lib/CryptoJS/rollups/hmac-sha256.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="lib/CryptoJS/rollups/sha256.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="lib/CryptoJS/components/hmac.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="lib/CryptoJS/components/enc-base64.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="lib/url-template/url-template.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="lib/apiGatewayCore/sigV4Client.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="lib/apiGatewayCore/apiGatewayClient.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="lib/apiGatewayCore/simpleHttpClient.js"
+    ></script>
+    <script type="text/javascript" src="lib/apiGatewayCore/utils.js"></script>
+    <script type="text/javascript" src="apigClient.js"></script>
+
+	<style type="text/css">
+		.container {
+			text-align: center;
+		}
+		#img {
+			margin: 10px, 10px, 10px, 10px
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+	<div class="row">
+		<div class="col-sm-6 col-md-4">
+		</div>
+	  <div class="col-sm-6 col-md-4">
+	  	<h1>ACCESS / DENY</h1>
+	    <div class="thumbnail">
+	      <img src="https://p99.pstatp.com/large/pgc-image/90b0be6942844d1a9803791eb386110e" alt="vistor image">
+	      <div class="caption">
+	      <p id="change">
+	        <p><button type="button" class="btn btn-success">ACCESS</button></p>
+			<p><button type="button" class="btn btn-danger">DENY</button></p>		
+			</p>
+	      </div>
+	    </div>
+  	  </div>
+	</div>
+	</div>
+
+
+	<script
+	  src="https://code.jquery.com/jquery-3.4.1.min.js"
+	  integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+	  crossorigin="anonymous">
+	  </script>
+
+	<script type="text/template" id="html_template">
+		<div>		
+			<form id="access" name="access" onsubmit="return PostData()">
+			  <div class="form-group">
+			    <input type="text" class="form-control" id="name" placeholder="visitor name">
+			  </div>
+			  <div class="form-group">
+			    <input type="text" class="form-control" id="phone" placeholder="phone number">
+			  </div>
+			  <button type="submit" class="btn btn-default">Submit</button>
+			</form>
+		</div>
+	</script>
+
+
+	<script type="text/javascript">
+		var apigClient = apigClientFactory.newClient({});
+		var access = false
+
+		var url = location.search;
+		var faceUrl = url.split('?')[1];
+		faceUrl = faceUrl.split('=', 2)[1];
+		faceUrl = decodeURI(faceUrl);
+		faceUrl = JSON.parse(faceUrl);
+		var img = "https://detectface.s3.amazonaws.com/" + faceUrl["bucket"]["objectKey"];
+
+		document.getElementsByTagName("img")[0].setAttribute('src', img);
+	
+		$(".btn-success").on("click", function(event){
+			access = true
+
+			document.getElementsByTagName("h1")[0].innerHTML = 'ACCESS';
+			$(".btn-danger").fadeOut(500,function(){
+				$(".btn-danger").remove();
+			});
+
+			$(this).fadeOut(500,function(){
+				$(this).remove();
+				var accessform = document.getElementById('html_template').innerHTML;
+				document.getElementById("change").innerHTML = accessform;
+			});
+			event.stopPropagation();
+		
+		});
+
+		$(".btn-danger").on("click", function(event){
+			access = false
+			document.getElementsByTagName("h1")[0].innerHTML = 'DENY';
+			$(".btn-success").fadeOut(1000,function(){
+				$(".btn-success").remove();
+			});
+			PostDenyData();
+			$(this).parents().fadeOut(1000,function(){
+				$(this).parents().remove();
+				// var accessform = document.getElementById('html_template').innerHTML;
+				// document.getElementById("change").innerHTML = accessform;
+				
+			});
+			event.stopPropagation();
+		});
+
+		function PostDenyData() {
+			var msg = {
+				"access": access,
+			}
+			// api
+			apigClient.rootPost({}, msg, {});
+		}
+
+
+		function PostData() {
+			var name = $("#name").val();
+			var phone = $("#phone").val();
+			// console.log(phone);
+			var msg = {
+				"access": access,
+				"faceid": faceUrl["faceid"],
+				"name": name,
+				"phone": phone,
+				"bucket": faceUrl["bucket"]
+			}
+
+			// api
+			apigClient.rootPost({}, msg, {});
+
+			$(".btn-default").parents().fadeOut(2000,function(){
+					$(".btn-default").remove();
+				});
+			event.stopPropagation();
+	        return false;
+    	}
+
+
+
+	</script>
+</body>
+</html>
